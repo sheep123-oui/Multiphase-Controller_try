@@ -29,7 +29,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "scheduler.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -103,7 +103,23 @@ int main(void)
   MX_TIM2_Init();
   MX_USART1_UART_Init();
   MX_TIM15_Init();
+  ALL_Init_Task();
   /* USER CODE BEGIN 2 */
+
+  if (HAL_HRTIM_WaveformCountStart(&hhrtim1,
+                                   HRTIM_TIMERID_MASTER |
+                                   HRTIM_TIMERID_TIMER_A |
+                                   HRTIM_TIMERID_TIMER_B) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  if (HAL_HRTIM_WaveformOutputStart(&hhrtim1,
+                                    HRTIM_OUTPUT_TA1 |
+                                    HRTIM_OUTPUT_TB1) != HAL_OK)
+  {
+    Error_Handler();
+  }
 
   /* USER CODE END 2 */
 
@@ -111,6 +127,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+    Scheduler_run();
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -160,7 +177,7 @@ void SystemClock_Config(void)
                               |RCC_PERIPHCLK_ADC12;
   PeriphClkInit.Usart1ClockSelection = RCC_USART1CLKSOURCE_PCLK1;
   PeriphClkInit.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV1;
-  PeriphClkInit.Hrtim1ClockSelection = RCC_HRTIM1CLK_HCLK;
+  PeriphClkInit.Hrtim1ClockSelection = RCC_HRTIM1CLK_PLLCLK;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
     Error_Handler();

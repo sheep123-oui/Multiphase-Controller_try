@@ -32,6 +32,25 @@ virtualFolder:
                 - path: Core/Src/stm32f3xx_it.c
                 - path: Core/Src/stm32f3xx_hal_msp.c
               folders: []
+            - name: mylib
+              files:
+                - path: Core/mylib/FIFO.c
+                - path: Core/mylib/FIFO.h
+                - path: Core/mylib/scheduler.c
+                - path: Core/mylib/scheduler.h
+                - path: Core/mylib/uart_data_handle.c
+                - path: Core/mylib/uart_data_handle.h
+                - path: Core/mylib/Vofa_send.c
+                - path: Core/mylib/Vofa_send.h
+                - path: Core/mylib/adc_handle.c
+                - path: Core/mylib/adc_handle.h
+                - path: Core/mylib/Ramp.c
+                - path: Core/mylib/Ramp.h
+                - path: Core/mylib/main_ctrl.c
+                - path: Core/mylib/main_ctrl.h
+                - path: Core/mylib/Pid.c
+                - path: Core/mylib/Pid.h
+              folders: []
     - name: Drivers
       files: []
       folders:
@@ -83,8 +102,10 @@ targets:
         - Drivers/CMSIS/Include
         - .cmsis/include
         - MDK-ARM/RTE/_F334_m_control
+        - Core/mylib
       libList: []
-    excludeList: []
+    excludeList:
+      - <virtual_root>/Application/User/mylib/status_tip.c
     settings:
       debugger: cortex-debug
     toolchain: AC5
@@ -96,27 +117,23 @@ targets:
         options:
           version: 4
           afterBuildTasks: []
-          asm-compiler:
-            defines: []
+          asm-compiler: {}
           beforeBuildTasks: []
           c/cpp-compiler:
             CXX_FLAGS: --diag_suppress=1 --diag_suppress=1295
             C_FLAGS: --diag_suppress=1 --diag_suppress=1295
             c99-mode: true
             one-elf-section-per-function: true
-            optimization: level-3
+            optimization: level-0
             warnings: all-warnings
           global:
             output-debug-info: enable
-            use-microLIB: false
+            use-microLIB: true
           linker:
             $outputTaskExcludes:
               - .bin
             output-format: elf
-            ro-base: ""
-            rw-base: ""
-            xo-base: ""
-        scatterFilePath: stm32f334xx_flash.sct
+        scatterFilePath: MDK-ARM/stm32f334xx_flash.sct
         storageLayout:
           RAM:
             - id: 1
@@ -201,4 +218,19 @@ targets:
         otherCmds: ""
         proType: 1
         speed: 8000
-    uploader: JLink
+      OpenOCD:
+        baseAddr: "0x08000000"
+        bin: ""
+        interface: stlink
+        target: stm32f3x
+      STLink:
+        address: "0x08000000"
+        bin: ""
+        elFile: None
+        optionBytes: .eide/f334_m_control.st.option.bytes.ini
+        otherCmds: ""
+        proType: SWD
+        resetMode: default
+        runAfterProgram: true
+        speed: 4000
+    uploader: STLink
