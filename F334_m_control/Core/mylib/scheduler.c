@@ -7,6 +7,8 @@
 uint8_t task_num;
 
 #define Debug_State 1
+#define FORCE_CAP_ENABLE_DEBUG 1
+#define FORCE_EN_MOS_ENABLE_DEBUG 1
 
 #if Debug_State == 1 // Debug
 
@@ -54,7 +56,17 @@ void sys_data_sent(void)
 
 void Start_task(void)
 {
-    start_uvlo();
+    //start_uvlo();
+
+#if FORCE_CAP_ENABLE_DEBUG
+    /* Debug only: keep the capacitor enable asserted for EN_MOS testing. */
+    Cap_Enable_set(1);
+#endif
+
+#if FORCE_EN_MOS_ENABLE_DEBUG
+    /* Debug only: bypass UVLO shutdown and force EN_MOS high. */
+    ctrl_Enable_set(1);
+#endif
 }
 
 void uart_cmd_find(void)
@@ -66,7 +78,6 @@ void uart_cmd_find(void)
                     User_ADC_out_data.Current_CAP_A,
                     User_ADC_out_data.Current_CAP_B,
                     User_ADC_out_data.Current_Chassis, 1, 1);
-    Vofa_Send_Process();
 	
 }
 
@@ -75,9 +86,10 @@ scheduler_task_t scheduler_task[] =
     {
         //@毫秒
 
-        {led_flash, 10, 0},
+        // {led_flash, 10, 0},
         //{adc_data_update, 1, 0},
-        {uart_cmd_find, 1, 0},
+
+        {uart_cmd_find, 10, 0},
         {PowerlimitUpdata, 1, 0},
         {wdg_flash, 200, 0},
         {Start_task, 1, 0},
@@ -144,6 +156,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
     if (htim->Instance == TIM15)
     {
-        main_ctrl_task();
+       main_ctrl_task();
     }
 }

@@ -103,23 +103,8 @@ int main(void)
   MX_TIM2_Init();
   MX_USART1_UART_Init();
   MX_TIM15_Init();
-  ALL_Init_Task();
   /* USER CODE BEGIN 2 */
-
-  if (HAL_HRTIM_WaveformCountStart(&hhrtim1,
-                                   HRTIM_TIMERID_MASTER |
-                                   HRTIM_TIMERID_TIMER_A |
-                                   HRTIM_TIMERID_TIMER_B) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  if (HAL_HRTIM_WaveformOutputStart(&hhrtim1,
-                                    HRTIM_OUTPUT_TA1 |
-                                    HRTIM_OUTPUT_TB1) != HAL_OK)
-  {
-    Error_Handler();
-  }
+  ALL_Init_Task();
 
   /* USER CODE END 2 */
 
