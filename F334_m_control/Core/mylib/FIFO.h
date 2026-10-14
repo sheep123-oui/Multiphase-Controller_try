@@ -51,7 +51,7 @@
 #define FIFO_NDEBUG
 #define USE_DYNAMIC_MEMORY //!< Use system malloc/free function
 
-#include "stm32f3xx_hal.h"
+#include "main.h"
 #define MUTEX_DECLARE(mutex) unsigned long mutex
 #define MUTEX_INIT(mutex)    do{mutex = 0;}while(0)
 #define MUTEX_LOCK(mutex)    do{__disable_irq();}while(0)

@@ -52,8 +52,7 @@ void ADC_To_Voltage(float* voltage_out, uint16_t adc_value, float gain, float vo
 	}
 	
 }
-/*
-*/
+
 void ADC_To_Current(float* current_out, uint16_t adc_value, uint8_t gain, float Rs)
 {
 	float current_out_temp = (adc_value * 3.3f / 4095) / gain / Rs;
@@ -63,23 +62,14 @@ void ADC_To_Current(float* current_out, uint16_t adc_value, uint8_t gain, float 
 	}
 }
 
-/*
-ADC1_11->V_CUP
-ADC1_12->V_BAT
-ADC1_13->Current_BAT
-ADC2_14->Current_CAP_A
-ADC2_4->Current_CAP_B
-ADC2_12->Current_Chassis
-*/
 void ADC_handle_task(User_ADC_out_data_t* adc_out_data)
 {
 	/***User_Core_Begin***/
-	adc_out_data->V_BAT = (adc1_value[2] * 3.3f / 4095) * 11;
-	adc_out_data->V_CAP = (adc1_value[1] * 3.3f / 4095) ;
+	adc_out_data->V_BAT = (adc1_value[1] * 3.3f / 4095) * 11;
+	adc_out_data->V_CAP = (adc1_value[2] * 3.3f / 4095) * 11;
 	adc_out_data->Current_BAT = (adc1_value[0] * 3.3f / 4095 - 1.65f) / 20 / 0.002f;
-	adc_out_data->Current_CAP_A = (adc2_value[0] * 3.3f / 4095 - 1.65f) / 20 / 0.001f;
-	adc_out_data->Current_CAP_B = (adc2_value[1] * 3.3f / 4095 - 1.65f) / 20 / 0.001f;
-	adc_out_data->Current_Chassis = (adc2_value[2] * 3.3f / 4095 - 1.65f) / 20 / 0.001f;
+	adc_out_data->Current_CAP = (adc2_value[0] * 3.3f / 4095 - 1.65f) / 20 / 0.002f;
+	adc_out_data->Current_Chassis = (adc2_value[1] * 3.3f / 4095 - 1.65f) / 20 / 0.001f;
 
 	adc_out_data->V_BAT = RC_filter(Last_V_BAT, adc_out_data->V_BAT, 0.1f);
 	Last_V_BAT = adc_out_data->V_BAT;
@@ -89,7 +79,7 @@ void ADC_handle_task(User_ADC_out_data_t* adc_out_data)
 void ADC_handle_chassis_current_task(User_ADC_out_data_t* adc_out_data)
 {
 	/***User_Core_Begin***/
-	adc_out_data->Current_Chassis = (adc2_value[2] * 3.3f / 4095 - 1.65f) / 20 / 0.001f;
+	adc_out_data->Current_Chassis = (adc2_value[1] * 3.3f / 4095 - 1.65f) / 20 / 0.001f;
 	/***User_Core_End***/
 }
 
@@ -97,7 +87,6 @@ void ADC_handle_curernt_task(User_ADC_out_data_t* adc_out_data)
 {
 	/***User_Core_Begin***/
 	adc_out_data->Current_BAT = (adc1_value[0] * 3.3f / 4095 - 1.65f) / 20 / 0.002f;
-	adc_out_data->Current_CAP_A = (adc2_value[0] * 3.3f / 4095 - 1.65f) / 20 / 0.002f;
-	adc_out_data->Current_CAP_B = (adc2_value[1] * 3.3f / 4095 - 1.65f) / 20 / 0.002f;
+	adc_out_data->Current_CAP = (adc2_value[0] * 3.3f / 4095 - 1.65f) / 20 / 0.002f;
 	/***User_Core_End***/
 }

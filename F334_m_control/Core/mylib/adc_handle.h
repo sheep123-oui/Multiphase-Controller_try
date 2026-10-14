@@ -6,7 +6,7 @@
 #define HADC2 hadc2
 
 #define ADC1_VALUE_SIZE 3
-#define ADC2_VALUE_SIZE 3
+#define ADC2_VALUE_SIZE 2
 
 extern uint16_t adc1_value[ADC1_VALUE_SIZE];
 extern uint16_t adc2_value[ADC2_VALUE_SIZE];
@@ -17,8 +17,7 @@ typedef struct
 	float V_BAT;
 	float V_CAP;
 	float Current_BAT;
-	float Current_CAP_A;
-	float Current_CAP_B;
+	float Current_CAP;
 	float Current_Chassis;
 	float Cap_power;
 	float Bat_power;

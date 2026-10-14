@@ -7,7 +7,7 @@
 #include "Pid.h"
 #include "My_Math.h"
 #include "Vofa_send.h"
-//#include "status_led_langue.h"
+#include "status_led_langue.h"
 
 
 float hysteresis_width = 0.2f;
@@ -33,30 +33,27 @@ void ctrl_Enable_set(uint8_t enable)
 	if (Cap_enable_flag == 0 || enable == 0)
 	{
 		HAL_GPIO_WritePin(EN_MOS_GPIO_Port, EN_MOS_Pin, 0);
-		//HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 1);
+		HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 1);
 		ctrl_enable_flag = 0;
 	}
 	else if (ctrl_enable_flag == 0 && enable == 1)
 	{
 		HAL_GPIO_WritePin(EN_MOS_GPIO_Port, EN_MOS_Pin, 1);
-		//HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 0);
+		HAL_GPIO_WritePin(LED3_GPIO_Port, LED3_Pin, 0);
 		ctrl_enable_flag = 1;
 	}
 }
 
-/*
-掉电使能
-*/ 
 void Cap_Enable_set(uint8_t enable)
 {
 	if (enable == 1)
 	{
-		HAL_GPIO_WritePin(CAP_EN_GPIO_Port, CAP_EN_Pin, 1);
+		HAL_GPIO_WritePin(Cap_En_GPIO_Port, Cap_En_Pin, 1);
 		Cap_enable_flag = 1;
 	}
 	else
 	{
-		HAL_GPIO_WritePin(CAP_EN_GPIO_Port, CAP_EN_Pin, 0);
+		HAL_GPIO_WritePin(Cap_En_GPIO_Port, Cap_En_Pin, 0);
 		Cap_enable_flag = 0;
 	}
 }
@@ -147,40 +144,39 @@ void ctrl_Updata_pid(float p, float i, float d)
 	Bat_power_loop.i = i;
 	Bat_power_loop.d = d;
 }
+void TIM1_BRK_TIM15_IRQHandler(void)
+{
+	__HAL_TIM_CLEAR_FLAG(&htim15, TIM_FLAG_UPDATE);
+	main_ctrl_task();
+}
 void main_ctrl_task(void)
 {
 	ADC_handle_task(&User_ADC_out_data);
-	User_ADC_out_data.Cap_power = User_ADC_out_data.Current_CAP_A* User_ADC_out_data.V_CAP;
-
+	User_ADC_out_data.Cap_power = User_ADC_out_data.Current_CAP * User_ADC_out_data.V_CAP;
 	User_ADC_out_data.Bat_power = User_ADC_out_data.Current_BAT * User_ADC_out_data.V_BAT;
 	User_ADC_out_data.Chassis_power = User_ADC_out_data.Current_Chassis * User_ADC_out_data.V_BAT;
 
-	 float power_delta = Bat_power_set - User_ADC_out_data.Chassis_power;
-	// //pid_calc(&Bat_power_loop, User_ADC_out_data.Bat_power, Bat_power_set);
-
+	float power_delta = Bat_power_set - User_ADC_out_data.Chassis_power;
+	// pid_calc(&Bat_power_loop, User_ADC_out_data.Bat_power, Bat_power_set);
 	Cap_current_set = (power_delta ) / User_ADC_out_data.V_CAP;
 	Clamp_de_(-36.0f, 32.0f, Cap_current_set);
 	Ctrl_hysteresis(Cap_current_set);
 
-	// // ctrl_check();
+	// ctrl_check();
 
 	// static uint32_t count = 0;
 	// count++;
 	// if (count >= 50)
 	// {
-		//Vofa_Send_Data_s((float*)&User_ADC_out_data, sizeof(User_ADC_out_data) / sizeof(float));
+	// 	Vofa_Send_Data_s((float*)&User_ADC_out_data, sizeof(User_ADC_out_data) / sizeof(float));
 	// 	count = 0;
 	// }
 }
 
 void HRtim_start(void)
 {
-	
-	// HAL_HRTIM_WaveformCountStart(&hhrtim1, HRTIM_TIMERID_MASTER);
 	HAL_HRTIM_WaveformCountStart(&hhrtim1, HRTIM_TIMERID_TIMER_A);
-	// HAL_HRTIM_WaveformCountStart(&hhrtim1, HRTIM_TIMERID_TIMER_B);
 	HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TA1 | HRTIM_OUTPUT_TA2);
-	// HAL_HRTIM_WaveformOutputStart(&hhrtim1, HRTIM_OUTPUT_TB1 | HRTIM_OUTPUT_TB2);
 }
 void DAC_start(void)
 {
@@ -233,7 +229,7 @@ const float POWER_VALUES[POWER_STEP_COUNT] = { 45.0f, 200.0f, 150.0f, 60.0f, 30.
 void PowerlimitUpdata(void)
 {
 
-	float V_real_measure = User_ADC_out_data.V_CAP - User_ADC_out_data.Current_CAP_A * 0.115f;
+	float V_real_measure = User_ADC_out_data.V_CAP - User_ADC_out_data.Current_CAP * 0.115f;
 	Clamp_de_(0.01f, 30.0f, V_real_measure);
 
 	float battery_power_limit_temp = POWER_VALUES[0];

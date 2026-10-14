@@ -91,6 +91,15 @@ void Error_Handler(void);
 #define CAP_EN_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
+/* 单相验证兼容：CubeMX 若已定义 LED3_Pin / Cap_En_Pin，以下定义自动失效 */
+#ifndef LED3_Pin
+  #define LED3_Pin GPIO_PIN_15
+  #define LED3_GPIO_Port GPIOC
+#endif
+#ifndef Cap_En_Pin
+  #define Cap_En_Pin GPIO_PIN_12
+  #define Cap_En_GPIO_Port GPIOA
+#endif
 
 /* USER CODE END Private defines */
 

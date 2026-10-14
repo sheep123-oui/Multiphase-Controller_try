@@ -15,11 +15,14 @@ extern scheduler_task_t scheduler_task[];
 
 
 void Scheduler_init(void);
+void Scheduler_ALL_Init_Task(void);
 void Scheduler_run(void);
 void Scheduler_stop(void (*task_func_P)(void));
 void Scheduler_continue(void (*task_func_P)(void));
 void Scheduler_set_RateTime(void (*task_func_P)(void), uint16_t time);
 void Scheduler_Delay(void (*task_func_P)(void));
+
+void Scheduler_up_task(void(*task_func_P)(void), uint8_t next_time);
 
 
 void average1S(void);
@@ -31,7 +34,7 @@ void free_Uart_sent(void);
 void Cap_V_Limit(void);
 
 void Start_task(void);
-void ALL_Init_Task(void);
+
 void wdg_flash(void);
 
 #endif

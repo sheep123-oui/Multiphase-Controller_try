@@ -5,106 +5,102 @@
 	* @author  �������� - ����
   ******************************************************************************
   * @attention
-  *	
+  *
   * ��һ������λ������2/4/8��float���ݡ�
   *
   **********************************2022 CKYF***********************************
   */
-	
+
 #include "Vofa_send.h"
 #include "string.h"
 #include "usart.h"
 #include "FIFO.h"
-Vofa_data_m_2 Vofa_data_2={.tail={0x00,0x00,0x80,0x7f}};
-Vofa_data_m_4 Vofa_data_4={.tail={0x00,0x00,0x80,0x7f}};
-Vofa_data_m_8 Vofa_data_8={.tail={0x00,0x00,0x80,0x7f}};
-
-#define VOFA_TX_FIFO_SIZE 1024
-#define VOFA_MAX_FRAME_SIZE sizeof(Vofa_data_m_8)
-#define VOFA_FIFO_RECORD_SIZE (sizeof(uint16_t) + VOFA_MAX_FRAME_SIZE)
-
-static char vofa_tx_fifo_area[VOFA_TX_FIFO_SIZE];
-static uint8_t vofa_tx_fifo_record[VOFA_FIFO_RECORD_SIZE];
-static uint8_t vofa_tx_dma_buffer[VOFA_MAX_FRAME_SIZE];
-static volatile uint8_t vofa_tx_dma_busy;
-fifo_s_t uart_tx_fifo;
-
-static void Vofa_QueueFrame(const void *frame, uint16_t frame_size)
+#include "uart_data_handle.h"
+typedef struct
 {
-	if (frame_size > VOFA_MAX_FRAME_SIZE ||
-		VOFA_FIFO_RECORD_SIZE > (uint16_t)fifo_s_free(&uart_tx_fifo))
-	{
-		return;
-	}
+	float ch_data[2];
+	uint8_t  tail[4];
+}Vofa_data_m_2;
 
-	memset(vofa_tx_fifo_record, 0, sizeof(vofa_tx_fifo_record));
-	memcpy(vofa_tx_fifo_record, &frame_size, sizeof(frame_size));
-	memcpy(vofa_tx_fifo_record + sizeof(frame_size), frame, frame_size);
-
-	if (fifo_s_puts(&uart_tx_fifo, (char *)vofa_tx_fifo_record,
-					VOFA_FIFO_RECORD_SIZE) != VOFA_FIFO_RECORD_SIZE)
-	{
-		return;
-	}
-
-	Vofa_Send_Process();
-}
-
-void Vofa_Send_Init(void)
+typedef struct
 {
-	fifo_s_init(&uart_tx_fifo, vofa_tx_fifo_area, VOFA_TX_FIFO_SIZE);
-	vofa_tx_dma_busy = 0;
-}
+	float ch_data[4];
+	uint8_t  tail[4];
+} Vofa_data_m_4;
 
-void Vofa_Send_Process(void)
+typedef struct
 {
-	uint16_t frame_size;
+	float ch_data[8];
+	uint8_t  tail[4];
+} Vofa_data_m_8;
 
-	if (vofa_tx_dma_busy ||
-		fifo_s_used(&uart_tx_fifo) < VOFA_FIFO_RECORD_SIZE)
-	{
-		return;
-	}
+/********USER_User_Set_Begin****************** */
 
-	if (fifo_s_gets(&uart_tx_fifo, (char *)vofa_tx_fifo_record,
-					VOFA_FIFO_RECORD_SIZE) != VOFA_FIFO_RECORD_SIZE)
-	{
-		return;
-	}
+#define Data_to_repeatTool 1 //是否使用串口转发工具发送数据 0不使用 1使用
+#define Uart_H_for_Vofa &huart1 //串口发送数据，选择使用的串口句柄
 
-	memcpy(&frame_size, vofa_tx_fifo_record, sizeof(frame_size));
-	if (frame_size > VOFA_MAX_FRAME_SIZE)
-	{
-		return;
-	}
+#define UART_DMA_USED_CACHE 1
 
-	memcpy(vofa_tx_dma_buffer,
-		   vofa_tx_fifo_record + sizeof(frame_size),
-		   frame_size);
+/********USER_User_Set_End****************** */
 
-	if (HAL_UART_Transmit_DMA(&huart1, vofa_tx_dma_buffer, frame_size) == HAL_OK)
-	{
-		vofa_tx_dma_busy = 1;
-	}
+// RAM_Set_D2SRAM1 Vofa_data_m_2 Vofa_data_2 = { .tail = {0x00,0x00,0x80,0x7f} };
+// RAM_Set_D2SRAM1 Vofa_data_m_4 Vofa_data_4 = { .tail = {0x00,0x00,0x80,0x7f} };
+// RAM_Set_D2SRAM1 Vofa_data_m_8 Vofa_data_8 = { .tail = {0x00,0x00,0x80,0x7f} };
+
+#if (UART_DMA_USED_CACHE == 0)
+#define DMA_UN_Cache_SET  RAM_Set_D2SRAM1
+#else
+#define DMA_UN_Cache_SET
+#endif 
+DMA_UN_Cache_SET Vofa_data_m_2 Vofa_data_2 = { 0 };
+DMA_UN_Cache_SET Vofa_data_m_4 Vofa_data_4 = { 0 };
+DMA_UN_Cache_SET Vofa_data_m_8 Vofa_data_8 = { 0 };
+
+uint8_t Uart_repeatTool_stream_ID = 0;
+
+void Vofa_init(void)
+{
+	Vofa_data_2.tail[0] = 0x00;
+	Vofa_data_2.tail[1] = 0x00;
+	Vofa_data_2.tail[2] = 0x80;
+	Vofa_data_2.tail[3] = 0x7f;
+	Vofa_data_4.tail[0] = 0x00;
+	Vofa_data_4.tail[1] = 0x00;
+	Vofa_data_4.tail[2] = 0x80;
+	Vofa_data_4.tail[3] = 0x7f;
+	Vofa_data_8.tail[0] = 0x00;
+	Vofa_data_8.tail[1] = 0x00;
+	Vofa_data_8.tail[2] = 0x80;
+	Vofa_data_8.tail[3] = 0x7f;
+	Uart_repeatTool_stream_ID = Uart_Repeat_Get_stream_ID(Uart_H_for_Vofa);
+
 }
-
 void Vofa_Send_Data2(float data1, float data2)
 {
 	Vofa_data_2.ch_data[0] = data1;
 	Vofa_data_2.ch_data[1] = data2;
-	Vofa_QueueFrame(&Vofa_data_2, sizeof(Vofa_data_2));
+#if Data_to_repeatTool == 1
+	Uart_ext_data_sent((uint8_t*)&Vofa_data_2, sizeof(Vofa_data_2), Uart_repeatTool_stream_ID);
+#else
+	HAL_UART_Transmit_DMA(Uart_H_for_Vofa, (uint8_t*)&Vofa_data_2, sizeof(Vofa_data_2));
+#endif
 }
 
-void Vofa_Send_Data4(float data1, float data2,float data3, float data4)
+void Vofa_Send_Data4(float data1, float data2, float data3, float data4)
 {
 	Vofa_data_4.ch_data[0] = data1;
 	Vofa_data_4.ch_data[1] = data2;
 	Vofa_data_4.ch_data[2] = data3;
 	Vofa_data_4.ch_data[3] = data4;
-	Vofa_QueueFrame(&Vofa_data_4, sizeof(Vofa_data_4));
+
+#if Data_to_repeatTool == 1
+	Uart_ext_data_sent((uint8_t*)&Vofa_data_4, sizeof(Vofa_data_4), Uart_repeatTool_stream_ID);
+#else
+	HAL_UART_Transmit_DMA(Uart_H_for_Vofa, (uint8_t*)&Vofa_data_4, sizeof(Vofa_data_4));
+#endif
 }
 
-void Vofa_Send_Data8(float data1, float data2,float data3, float data4,float data5, float data6,float data7, float data8)
+void Vofa_Send_Data8(float data1, float data2, float data3, float data4, float data5, float data6, float data7, float data8)
 {
 	Vofa_data_8.ch_data[0] = data1;
 	Vofa_data_8.ch_data[1] = data2;
@@ -114,13 +110,22 @@ void Vofa_Send_Data8(float data1, float data2,float data3, float data4,float dat
 	Vofa_data_8.ch_data[5] = data6;
 	Vofa_data_8.ch_data[6] = data7;
 	Vofa_data_8.ch_data[7] = data8;
-	Vofa_QueueFrame(&Vofa_data_8, sizeof(Vofa_data_8));
+
+#if Data_to_repeatTool == 1
+	Uart_ext_data_sent((uint8_t*)&Vofa_data_8, sizeof(Vofa_data_8), Uart_repeatTool_stream_ID);
+#else
+	HAL_UART_Transmit_DMA(Uart_H_for_Vofa, (uint8_t*)&Vofa_data_8, sizeof(Vofa_data_8));
+#endif
 }
 
-void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
+void Vofa_Send_Data2_U3(float data1, float data2)
 {
-	if (huart == &huart1)
-	{
-		vofa_tx_dma_busy = 0;
-	}
+	Vofa_data_2.ch_data[0] = data1;
+	Vofa_data_2.ch_data[1] = data2;
+	// HAL_UART_Transmit_DMA(&huart3, (uint8_t *)&Vofa_data_2, sizeof(Vofa_data_2));   
+}
+void Vofa_Send_Data_s(float*data, uint8_t ch_num)
+{
+	Uart_ext_data_sent((uint8_t*)data, ch_num * sizeof(float), Uart_repeatTool_stream_ID);
+	Uart_ext_data_sent(Vofa_data_2.tail, sizeof(Vofa_data_2.tail), Uart_repeatTool_stream_ID);
 }
