@@ -36,7 +36,7 @@ typedef struct
 
 /********USER_User_Set_Begin****************** */
 
-#define Data_to_repeatTool 1 //是否使用串口转发工具发送数据 0不使用 1使用
+#define Data_to_repeatTool 0 //是否使用串口转发工具发送数据 0不使用 1使用
 #define Uart_H_for_Vofa &huart1 //串口发送数据，选择使用的串口句柄
 
 #define UART_DMA_USED_CACHE 1

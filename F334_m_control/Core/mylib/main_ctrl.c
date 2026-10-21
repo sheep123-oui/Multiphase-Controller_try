@@ -7,7 +7,7 @@
 #include "Pid.h"
 #include "My_Math.h"
 #include "Vofa_send.h"
-#include "status_led_langue.h"
+// #include "status_led_langue.h"
 
 
 float hysteresis_width = 0.2f;
@@ -18,6 +18,7 @@ uint8_t Cap_enable_flag = 0;
 
 float Bat_power_set = 40;
 float Cap_current_set = 0;
+volatile uint32_t main_ctrl_run_cnt = 0; // 采样诊断：主控循环运行计数
 
 
 
@@ -130,8 +131,9 @@ void ctrl_check(void)
 
 void main_ctrl_Init(void)
 {
+	// __HAL_TIM_SET_AUTORELOAD(&htim15, 99); // 10kHz 降速备选：若中断负载过高导致调度器饥饿，取消本行注释恢复 10kHz
 	DAC_start();
-	HRtim_start();
+	HRtim_start(); 
 	// DAC_set_value(1, -1);
 	Ctrl_Set_hysteresis_width(0.1f);
 	Ctrl_hysteresis(0.3f);
@@ -151,6 +153,7 @@ void TIM1_BRK_TIM15_IRQHandler(void)
 }
 void main_ctrl_task(void)
 {
+	main_ctrl_run_cnt++;
 	ADC_handle_task(&User_ADC_out_data);
 	User_ADC_out_data.Cap_power = User_ADC_out_data.Current_CAP * User_ADC_out_data.V_CAP;
 	User_ADC_out_data.Bat_power = User_ADC_out_data.Current_BAT * User_ADC_out_data.V_BAT;
@@ -219,7 +222,8 @@ void Ctrl_hysteresis(float current)
 #endif
 
 const float POWER_VOLTAGE_POINTS[POWER_STEP_COUNT] = { 0.0f, 12.0f, 17.0f, 20.8f, 24.3f };
-const float POWER_VALUES[POWER_STEP_COUNT] = { 45.0f, 200.0f, 150.0f, 60.0f, 30.0f };
+// const float POWER_VALUES[POWER_STEP_COUNT] = { 45.0f, 200.0f, 150.0f, 60.0f, 30.0f };
+const float POWER_VALUES[POWER_STEP_COUNT] = { 2.0f, 2.0f, 2.0f, 2.0f, 2.0f };
 
 /* final minimum power when approaching Cap_full_voltage_value (can be changed) */
 #ifndef POWER_END_POWER
@@ -230,6 +234,7 @@ void PowerlimitUpdata(void)
 {
 
 	float V_real_measure = User_ADC_out_data.V_CAP - User_ADC_out_data.Current_CAP * 0.115f;
+	// float V_real_measure = User_ADC_out_data.V_CAP - User_ADC_out_data.Current_CAP ;
 	Clamp_de_(0.01f, 30.0f, V_real_measure);
 
 	float battery_power_limit_temp = POWER_VALUES[0];

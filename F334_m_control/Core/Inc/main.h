@@ -63,16 +63,10 @@ void Error_Handler(void);
 #define LED1_GPIO_Port GPIOC
 #define LED2_Pin GPIO_PIN_15
 #define LED2_GPIO_Port GPIOC
-#define TIM2_CH1_EC1_Pin GPIO_PIN_0
-#define TIM2_CH1_EC1_GPIO_Port GPIOA
-#define TIM2_CH2_EC2_Pin GPIO_PIN_1
-#define TIM2_CH2_EC2_GPIO_Port GPIOA
 #define DACH_Pin GPIO_PIN_4
 #define DACH_GPIO_Port GPIOA
 #define DACL_Pin GPIO_PIN_5
 #define DACL_GPIO_Port GPIOA
-#define DAC_COMP_Pin GPIO_PIN_6
-#define DAC_COMP_GPIO_Port GPIOA
 #define ADC2_4_I_CAP_B_Pin GPIO_PIN_7
 #define ADC2_4_I_CAP_B_GPIO_Port GPIOA
 #define ADC1_11_V_CAP_Pin GPIO_PIN_0

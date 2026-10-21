@@ -6,7 +6,7 @@
 #define HADC2 hadc2
 
 #define ADC1_VALUE_SIZE 3
-#define ADC2_VALUE_SIZE 2
+#define ADC2_VALUE_SIZE 3
 
 extern uint16_t adc1_value[ADC1_VALUE_SIZE];
 extern uint16_t adc2_value[ADC2_VALUE_SIZE];

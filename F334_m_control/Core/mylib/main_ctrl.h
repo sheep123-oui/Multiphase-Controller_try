@@ -15,6 +15,8 @@ void ctrl_Updata_pid(float p, float i, float d);
 
 void main_ctrl_task(void);
 
+extern volatile uint32_t main_ctrl_run_cnt; // 采样诊断计数
+
 void HRtim_start(void);
 
 void DAC_start(void);

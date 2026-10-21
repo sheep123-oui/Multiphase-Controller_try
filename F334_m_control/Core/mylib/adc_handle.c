@@ -65,8 +65,8 @@ void ADC_To_Current(float* current_out, uint16_t adc_value, uint8_t gain, float 
 void ADC_handle_task(User_ADC_out_data_t* adc_out_data)
 {
 	/***User_Core_Begin***/
-	adc_out_data->V_BAT = (adc1_value[1] * 3.3f / 4095) * 11;
-	adc_out_data->V_CAP = (adc1_value[2] * 3.3f / 4095) * 11;
+	adc_out_data->V_BAT = (adc1_value[2] * 3.3f / 4095) * 11;
+	adc_out_data->V_CAP = (adc1_value[1] * 3.3f / 4095) * 11;
 	adc_out_data->Current_BAT = (adc1_value[0] * 3.3f / 4095 - 1.65f) / 20 / 0.002f;
 	adc_out_data->Current_CAP = (adc2_value[0] * 3.3f / 4095 - 1.65f) / 20 / 0.002f;
 	adc_out_data->Current_Chassis = (adc2_value[1] * 3.3f / 4095 - 1.65f) / 20 / 0.001f;

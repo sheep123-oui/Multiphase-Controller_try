@@ -50,12 +50,12 @@ virtualFolder:
                 - path: Core/mylib/main_ctrl.h
                 - path: Core/mylib/Pid.c
                 - path: Core/mylib/Pid.h
-                - path: Core/mylib/status_led_langue.c
-                - path: Core/mylib/status_led_langue.h
-                - path: Core/mylib/queue_pool.c
-                - path: Core/mylib/queue_pool.h
                 - path: Core/mylib/Anotc.c
                 - path: Core/mylib/Anotc.h
+                - path: Core/mylib/queue_pool.c
+                - path: Core/mylib/queue_pool.h
+                - path: Core/mylib/status_led_langue.c
+                - path: Core/mylib/status_led_langue.h
                 - path: Core/mylib/uart_user_cmd.c
                 - path: Core/mylib/uart_user_cmd.h
               folders: []
@@ -114,6 +114,7 @@ targets:
       libList: []
     excludeList:
       - <virtual_root>/Application/User/mylib/status_tip.c
+      - <virtual_root>/Application/User/mylib/status_led_langue.c
     settings:
       debugger: cortex-debug
     toolchain: AC5
@@ -132,7 +133,7 @@ targets:
             C_FLAGS: --diag_suppress=1 --diag_suppress=1295
             c99-mode: true
             one-elf-section-per-function: true
-            optimization: level-0
+            optimization: level-3
             warnings: all-warnings
           global:
             output-debug-info: enable
@@ -216,6 +217,49 @@ targets:
                 startAddr: "0x0"
               tag: IROM
         useCustomScatterFile: true
+      AC6:
+        archExtensions: ""
+        cpuType: Cortex-M4
+        floatingPointHardware: single
+        options:
+          version: 3
+          afterBuildTasks: []
+          asm-compiler:
+            $use: asm-auto
+            misc-controls: ""
+          beforeBuildTasks: []
+          c/cpp-compiler:
+            language-c: c99
+            language-cpp: c++11
+            link-time-optimization: false
+            optimization: level-0
+          global:
+            output-debug-info: enable
+            use-microLIB: false
+          linker:
+            $outputTaskExcludes:
+              - .bin
+            misc-controls: --diag_suppress=L6329
+            output-format: elf
+        scatterFilePath: <YOUR_SCATTER_FILE>.sct
+        storageLayout:
+          RAM:
+            - id: 1
+              isChecked: true
+              mem:
+                size: "0x5000"
+                startAddr: "0x20000000"
+              noInit: false
+              tag: IRAM
+          ROM:
+            - id: 1
+              isChecked: true
+              isStartup: true
+              mem:
+                size: "0x10000"
+                startAddr: "0x08000000"
+              tag: IROM
+        useCustomScatterFile: false
     uploadConfigMap:
       JLink:
         baseAddr: ""

@@ -98,11 +98,10 @@ int main(void)
   MX_ADC2_Init();
   MX_CAN_Init();
   MX_DAC1_Init();
-  MX_DAC2_Init();
   MX_HRTIM1_Init();
-  MX_TIM2_Init();
   MX_USART1_UART_Init();
   MX_TIM15_Init();
+  MX_DAC2_Init();
   /* USER CODE BEGIN 2 */
   Scheduler_ALL_Init_Task();
 

@@ -118,7 +118,7 @@ __attribute__((noinline))  void Uart_data_handle_CallBack(uint8_t* data_start, u
 		}
 		// if (p_data == NULL)
 		{
-			LED_Set_CMD_toQueue(CMD_LED1, 0x04, 1, 0);
+			// LED_Set_CMD_toQueue(CMD_LED1, 0x04, 1, 0);
 		}
 	}
 	return;
@@ -126,9 +126,9 @@ __attribute__((noinline))  void Uart_data_handle_CallBack(uint8_t* data_start, u
 
 __attribute__((noinline))  void Uart_private_cmd_CallBack(uint8_t* data_start, uint8_t* data_end)
 {
-	LED_Set_CMD_toQueue(CMD_LED1, 0x04, 10, 0);
+	// LED_Set_CMD_toQueue(CMD_LED1, 0x04, 10, 0);
 }
 void Uart_EF_Reset_Event_CallBack(UART_HandleTypeDef* huart)
 {
-	LED_Set_CMD_toQueue(CMD_LED1, 0x06, 20, 0b10000);
+	// LED_Set_CMD_toQueue(CMD_LED1, 0x06, 20, 0b10000);
 }
