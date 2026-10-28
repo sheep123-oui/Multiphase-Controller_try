@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "MDK-ARM"
+		}
+	],
+	"settings": {
+		"powershell.cwd": "hysteresis_cap_f334"
+	},
+	"extensions": {}
+}

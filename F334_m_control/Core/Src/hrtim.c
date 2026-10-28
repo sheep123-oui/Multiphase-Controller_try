@@ -64,13 +64,8 @@ void MX_HRTIM1_Init(void)
   }
   pEventCfg.Source = HRTIM_EVENTSRC_1;
   pEventCfg.Polarity = HRTIM_EVENTPOLARITY_HIGH;
-  pEventCfg.Sensitivity = HRTIM_EVENTSENSITIVITY_RISINGEDGE;
-  pEventCfg.Filter = HRTIM_EVENTFILTER_NONE;
-  if (HAL_HRTIM_EventConfig(&hhrtim1, HRTIM_EVENT_7, &pEventCfg) != HAL_OK)
-  {
-    Error_Handler();
-  }
   pEventCfg.Sensitivity = HRTIM_EVENTSENSITIVITY_FALLINGEDGE;
+  pEventCfg.Filter = HRTIM_EVENTFILTER_NONE;
   if (HAL_HRTIM_EventConfig(&hhrtim1, HRTIM_EVENT_9, &pEventCfg) != HAL_OK)
   {
     Error_Handler();
@@ -166,9 +161,8 @@ void HAL_HRTIM_MspInit(HRTIM_HandleTypeDef* hrtimHandle)
     __HAL_RCC_GPIOB_CLK_ENABLE();
     /**HRTIM1 GPIO Configuration
     PB3     ------> HRTIM1_EEV9
-    PB4     ------> HRTIM1_EEV7
     */
-    GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_4;
+    GPIO_InitStruct.Pin = GPIO_PIN_3;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -225,11 +219,10 @@ void HAL_HRTIM_MspDeInit(HRTIM_HandleTypeDef* hrtimHandle)
     PA8     ------> HRTIM1_CHA1
     PA9     ------> HRTIM1_CHA2
     PB3     ------> HRTIM1_EEV9
-    PB4     ------> HRTIM1_EEV7
     */
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_8|GPIO_PIN_9);
 
-    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_3|GPIO_PIN_4);
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_3);
 
   /* USER CODE BEGIN HRTIM1_MspDeInit 1 */
 
@@ -240,4 +233,3 @@ void HAL_HRTIM_MspDeInit(HRTIM_HandleTypeDef* hrtimHandle)
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
-

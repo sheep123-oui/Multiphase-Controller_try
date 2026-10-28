@@ -57,43 +57,32 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
-#define LED0_Pin GPIO_PIN_13
-#define LED0_GPIO_Port GPIOC
-#define LED1_Pin GPIO_PIN_14
+#define LED1_Pin GPIO_PIN_13
 #define LED1_GPIO_Port GPIOC
-#define LED2_Pin GPIO_PIN_15
+#define LED2_Pin GPIO_PIN_14
 #define LED2_GPIO_Port GPIOC
-#define DACH_Pin GPIO_PIN_4
-#define DACH_GPIO_Port GPIOA
-#define DACL_Pin GPIO_PIN_5
-#define DACL_GPIO_Port GPIOA
-#define ADC2_4_I_CAP_B_Pin GPIO_PIN_7
-#define ADC2_4_I_CAP_B_GPIO_Port GPIOA
-#define ADC1_11_V_CAP_Pin GPIO_PIN_0
-#define ADC1_11_V_CAP_GPIO_Port GPIOB
-#define ADC1_12_V_24V_Pin GPIO_PIN_1
-#define ADC1_12_V_24V_GPIO_Port GPIOB
-#define ADC2_12_I_CHASSIS_Pin GPIO_PIN_2
-#define ADC2_12_I_CHASSIS_GPIO_Port GPIOB
+#define LED3_Pin GPIO_PIN_15
+#define LED3_GPIO_Port GPIOC
+#define DAC_H_Pin GPIO_PIN_4
+#define DAC_H_GPIO_Port GPIOA
+#define DAC_L_Pin GPIO_PIN_6
+#define DAC_L_GPIO_Port GPIOA
+#define ADC1_11_Vcap_Pin GPIO_PIN_0
+#define ADC1_11_Vcap_GPIO_Port GPIOB
+#define ADC1_12_V24_Pin GPIO_PIN_1
+#define ADC1_12_V24_GPIO_Port GPIOB
+#define ADC2_12_I_chas_Pin GPIO_PIN_2
+#define ADC2_12_I_chas_GPIO_Port GPIOB
 #define ADC1_13_I_BAT_Pin GPIO_PIN_13
 #define ADC1_13_I_BAT_GPIO_Port GPIOB
-#define ADC2_14_I_CAP_A_Pin GPIO_PIN_14
-#define ADC2_14_I_CAP_A_GPIO_Port GPIOB
+#define ADC2_14_I_CAP_Pin GPIO_PIN_14
+#define ADC2_14_I_CAP_GPIO_Port GPIOB
 #define EN_MOS_Pin GPIO_PIN_15
 #define EN_MOS_GPIO_Port GPIOB
-#define CAP_EN_Pin GPIO_PIN_12
-#define CAP_EN_GPIO_Port GPIOA
+#define Cap_En_Pin GPIO_PIN_12
+#define Cap_En_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
-/* 单相验证兼容：CubeMX 若已定义 LED3_Pin / Cap_En_Pin，以下定义自动失效 */
-#ifndef LED3_Pin
-  #define LED3_Pin GPIO_PIN_15
-  #define LED3_GPIO_Port GPIOC
-#endif
-#ifndef Cap_En_Pin
-  #define Cap_En_Pin GPIO_PIN_12
-  #define Cap_En_GPIO_Port GPIOA
-#endif
 
 /* USER CODE END Private defines */
 
