@@ -51,17 +51,9 @@ void MX_DAC1_Init(void)
 
   /** DAC channel OUT1 config
   */
-  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
+  sConfig.DAC_Trigger = DAC_TRIGGER_T15_TRGO;
   sConfig.DAC_OutputBuffer = DAC_OUTPUTBUFFER_ENABLE;
   if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /** DAC channel OUT2 config
-  */
-  sConfig.DAC_OutputSwitch = DAC_OUTPUTSWITCH_ENABLE;
-  if (HAL_DAC_ConfigChannel(&hdac1, &sConfig, DAC_CHANNEL_2) != HAL_OK)
   {
     Error_Handler();
   }
@@ -94,7 +86,7 @@ void MX_DAC2_Init(void)
 
   /** DAC channel OUT1 config
   */
-  sConfig.DAC_Trigger = DAC_TRIGGER_NONE;
+  sConfig.DAC_Trigger = DAC_TRIGGER_T15_TRGO;
   sConfig.DAC_OutputSwitch = DAC_OUTPUTSWITCH_ENABLE;
   if (HAL_DAC_ConfigChannel(&hdac2, &sConfig, DAC_CHANNEL_1) != HAL_OK)
   {
@@ -121,12 +113,11 @@ void HAL_DAC_MspInit(DAC_HandleTypeDef* dacHandle)
     __HAL_RCC_GPIOA_CLK_ENABLE();
     /**DAC1 GPIO Configuration
     PA4     ------> DAC1_OUT1
-    PA5     ------> DAC1_OUT2
     */
-    GPIO_InitStruct.Pin = DACH_Pin|DACL_Pin;
+    GPIO_InitStruct.Pin = DAC_H_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    HAL_GPIO_Init(DAC_H_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN DAC1_MspInit 1 */
 
@@ -144,10 +135,10 @@ void HAL_DAC_MspInit(DAC_HandleTypeDef* dacHandle)
     /**DAC2 GPIO Configuration
     PA6     ------> DAC2_OUT1
     */
-    GPIO_InitStruct.Pin = DAC_COMP_Pin;
+    GPIO_InitStruct.Pin = DAC_L_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(DAC_COMP_GPIO_Port, &GPIO_InitStruct);
+    HAL_GPIO_Init(DAC_L_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN DAC2_MspInit 1 */
 
@@ -168,9 +159,8 @@ void HAL_DAC_MspDeInit(DAC_HandleTypeDef* dacHandle)
 
     /**DAC1 GPIO Configuration
     PA4     ------> DAC1_OUT1
-    PA5     ------> DAC1_OUT2
     */
-    HAL_GPIO_DeInit(GPIOA, DACH_Pin|DACL_Pin);
+    HAL_GPIO_DeInit(DAC_H_GPIO_Port, DAC_H_Pin);
 
   /* USER CODE BEGIN DAC1_MspDeInit 1 */
 
@@ -187,7 +177,7 @@ void HAL_DAC_MspDeInit(DAC_HandleTypeDef* dacHandle)
     /**DAC2 GPIO Configuration
     PA6     ------> DAC2_OUT1
     */
-    HAL_GPIO_DeInit(DAC_COMP_GPIO_Port, DAC_COMP_Pin);
+    HAL_GPIO_DeInit(DAC_L_GPIO_Port, DAC_L_Pin);
 
   /* USER CODE BEGIN DAC2_MspDeInit 1 */
 
@@ -198,4 +188,3 @@ void HAL_DAC_MspDeInit(DAC_HandleTypeDef* dacHandle)
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
-
