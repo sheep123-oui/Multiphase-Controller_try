@@ -21,9 +21,8 @@ void Scheduler_ALL_Init_Task(void)
 {
 	Scheduler_init();
 	status_init();
-	// Uart_CMD_Init();
-	// // Auotc_Init();
-	// Vofa_init();
+	Uart_Tx_Init();
+	Vofa_init();
 	ADC_handle_Init();
 	main_ctrl_Init();
 #if Debug_State == 0//Release
@@ -49,11 +48,19 @@ void wdg_flash(void)
 }
 void sys_data_sent(void)
 {
-	// float data[]={HAL_GetTick()};
-	// // Anotc_Send_float_Data(data,1,0xf1);
-	// Vofa_Send_Data2(HAL_GetTick(),0);
-	// ADC_handle_task(&User_ADC_out_data);
-	// Vofa_Send_Data_s((float*)&User_ADC_out_data, sizeof(User_ADC_out_data) / sizeof(float));
+	/* TIM15 updates these values; copy one consistent sample before sending. */
+	User_ADC_out_data_t sample;
+	uint32_t irq_state = __get_PRIMASK();
+	__disable_irq();
+	sample = User_ADC_out_data;
+	__set_PRIMASK(irq_state);
+
+	float data[] = {
+		sample.V_BAT, sample.V_CAP,
+		sample.Current_BAT, sample.Current_CAP, sample.Current_Chassis,
+		sample.Cap_power, sample.Bat_power, sample.Chassis_power
+	};
+	Vofa_Send_Data_s(data, sizeof(data) / sizeof(data[0]));
 }
 void Start_task(void)
 {
@@ -66,8 +73,9 @@ scheduler_task_t scheduler_task[] =
 {
 	//@毫秒
 	{led_flash, 10, 0},
-	// {Uart_Cmd_find, 2, 0},
-	{sys_data_sent,1,0},
+	/* 36 bytes/frame at 100 Hz uses 31.25% of the 115200-baud 8N1 link. */
+	{sys_data_sent,10,0},
+	{Uart_Tx_task,1,0},
 	{PowerlimitUpdata,1,0},
 	{Start_task, 1, 0},
 #if Debug_State == 0

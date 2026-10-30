@@ -1,0 +1,113 @@
+version: '4.1'
+name: hysteresis_cap_f334_10uH
+type: ARM
+deviceName: STM32F334C8
+packDir: null
+srcDirs:
+- Core/Src
+- Core/MyCore
+virtualFolder:
+  name: <virtual_root>
+  files: []
+  folders:
+  - name: STM32F3xx_HAL_Driver
+    files:
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_adc.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_adc_ex.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_can.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_cortex.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_dac.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_dac_ex.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_dma.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_exti.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_flash.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_flash_ex.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_gpio.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_hrtim.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_i2c.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_i2c_ex.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_pwr.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_pwr_ex.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_rcc.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_rcc_ex.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_tim.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_tim_ex.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_uart.c
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Src/stm32f3xx_hal_uart_ex.c
+    folders: []
+  - name: Startup
+    files:
+    - path: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/CMSIS/Device/ST/STM32F3xx/Source/Templates/gcc/startup_stm32f334x8.s
+    folders: []
+dependenceList: []
+outDir: build
+miscInfo:
+  uid: f1b477f7095bd80e71b5418763eda1f1
+targets:
+  10uH_GCC:
+    cppPreprocessAttrs:
+      defineList:
+      - USE_HAL_DRIVER
+      - STM32F334x8
+      incList:
+      - Core/Inc
+      - Core/MyCore
+      - ../../Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Inc
+      - ../../Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/STM32F3xx_HAL_Driver/Inc/Legacy
+      - ../../Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/CMSIS/Device/ST/STM32F3xx/Include
+      - ../../Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Drivers/CMSIS/Include
+      libList: []
+    excludeList: []
+    settings:
+      debugger: cortex-debug
+    toolchain: GCC
+    toolchainConfigMap:
+      GCC:
+        archExtensions: ''
+        cpuType: Cortex-M4
+        floatingPointHardware: single
+        options:
+          version: 5
+          afterBuildTasks: []
+          asm-compiler:
+            ASM_FLAGS: ''
+          beforeBuildTasks: []
+          c/cpp-compiler:
+            CXX_FLAGS: ''
+            C_FLAGS: ''
+            language-c: gnu11
+            language-cpp: c++11
+            one-elf-section-per-data: true
+            one-elf-section-per-function: true
+            optimization: level-size
+            warnings: all-warnings
+          global:
+            $float-abi-type: hard
+            misc-control: ''
+            not-use-syscalls: true
+            output-debug-info: enable
+            use-newlib-nano: true
+          linker:
+            $outputTaskExcludes: []
+            LD_FLAGS: -Wl,--print-memory-usage
+            LIB_FLAGS: -lm
+            output-format: elf
+            remove-unused-input-sections: true
+        scatterFilePath: C:/Users/LOCK065/STM32Cube/Repository/STM32Cube_FW_F3_V1.11.6/Projects/STM32F3348-Discovery/Templates/SW4STM32/STM32F3348-Discovery/STM32F334C8Tx_FLASH.ld
+        storageLayout:
+          RAM: []
+          ROM: []
+        useCustomScatterFile: true
+    uploadConfigMap:
+      STLink:
+        address: '0x08000000'
+        bin: ''
+        elFile: None
+        optionBytes: .eide/10uh_gcc.st.option.bytes.ini
+        otherCmds: ''
+        proType: SWD
+        resetMode: default
+        runAfterProgram: true
+        speed: 4000
+    uploader: STLink

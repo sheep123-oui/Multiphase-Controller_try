@@ -208,12 +208,6 @@ void Uart_Repeat_stream_register_from_printf(UART_HandleTypeDef* huart_output)
 void Uart_Init_for_Rx(void)
 {
 	memset(uart_rx_buffer, 0, sizeof(uart_rx_buffer));
-#if UART_Repeat_tool == 1
-	memset(uart_repeat_buffer, 0, sizeof(uart_repeat_buffer));
-#if Printf_ON_repeat_stream == 1
-	memset(&uart_printf_buffer, 0, sizeof(uart_printf_buffer));
-#endif
-#endif
 
 	for (uint8_t i = 0; i < UART_NUM; i++)
 	{
@@ -228,12 +222,13 @@ void Uart_Init_for_Rx(void)
 	__enable_irq();
 }
 
-void Uart_CMD_Init(void)
+void Uart_Tx_Init(void)
 {
-
-	Uart_Init_for_Rx();
-
 #if UART_Repeat_tool == 1
+	memset(uart_repeat_buffer, 0, sizeof(uart_repeat_buffer));
+#if Printf_ON_repeat_stream == 1
+	memset(&uart_printf_buffer, 0, sizeof(uart_printf_buffer));
+#endif
 	for (uint8_t i = 0; i < UART_Repeat_stream; i++)
 	{
 		uart_repeat_buffer[i].huart_output = UART_Repeat_stream_handle[i];
@@ -244,6 +239,13 @@ void Uart_CMD_Init(void)
 #endif
 #endif
 
+	/* TX initialization is also usable without enabling command reception. */
+}
+
+void Uart_CMD_Init(void)
+{
+	Uart_Init_for_Rx();
+	Uart_Tx_Init();
 	Uart_user_set_Init();
 }
 
@@ -452,24 +454,45 @@ uint16_t Uart_GetData(void)
 	return return_value;
 
 }
-__attribute__((noinline)) void Uart_Cmd_find(void)
+void Uart_Tx_task(void)
 {
-
 #if UART_Repeat_tool == 1//Debug
 	for (uint8_t i = 0; i < UART_Repeat_stream; i++)
 	{
-		uint16_t len_loop = fifo_s_used(&uart_repeat_buffer[i].uart_repeat_fifo); // 待发送数据长度
-		if (len_loop != 0)
+		Uart_Repeat_Buffer_t* stream = &uart_repeat_buffer[i];
+		if (stream->huart_output == NULL || stream->huart_output->gState != HAL_UART_STATE_READY)
 		{
-			fifo_s_gets(&uart_repeat_buffer[i].uart_repeat_fifo, (char*)(&uart_repeat_buffer[i].repeat_tx_DMA_buffer), len_loop); // 从 FIFO 取数据
-
+			continue;
+		}
+		/* Never overwrite the buffer while DMA is still transmitting it. */
+		if (stream->tx_pending_size == 0)
+		{
+			uint16_t len = fifo_s_used(&stream->uart_repeat_fifo);
+			if (len == 0)
+			{
+				continue;
+			}
+			stream->tx_pending_size = fifo_s_gets(&stream->uart_repeat_fifo,
+				(char*)stream->repeat_tx_DMA_buffer, len);
+		}
+		if (stream->tx_pending_size != 0)
+		{
 #if (Support_for_H7 == 1) && (UART_RX_DMA_USED_CACHE == 1)
-			SCB_CleanDCache_by_Addr((uint32_t*)&uart_repeat_buffer[i].repeat_tx_DMA_buffer, DMA_RXBUFFERSIZE);
+			SCB_CleanDCache_by_Addr((uint32_t*)stream->repeat_tx_DMA_buffer, sizeof(stream->repeat_tx_DMA_buffer));
 #endif
-			HAL_UART_Transmit_DMA(uart_repeat_buffer[i].huart_output, (uint8_t*)&uart_repeat_buffer[i].repeat_tx_DMA_buffer, len_loop);
+			if (HAL_UART_Transmit_DMA(stream->huart_output, stream->repeat_tx_DMA_buffer,
+				stream->tx_pending_size) == HAL_OK)
+			{
+				stream->tx_pending_size = 0;
+			}
 		}
 	}
 #endif
+}
+
+__attribute__((noinline)) void Uart_Cmd_find(void)
+{
+	Uart_Tx_task();
 
 	uint8_t read_state = Uart_GetData(); // 待发送数据长度
 	if (read_state == 0)
@@ -602,16 +625,18 @@ uint16_t Uart_get_Rx_stream_data(uint8_t* data, uint16_t len, uint8_t stream_id)
 #if UART_Repeat_tool == 1 
 void Uart_ext_data_sent(uint8_t* data, uint16_t len, uint8_t stream_id)
 {
-	if (stream_id >= UART_Repeat_stream)
+	if (stream_id >= UART_Repeat_stream || data == NULL || len == 0)
 	{
 		return;
 	}
-	uint16_t used = fifo_s_used(&uart_repeat_buffer[stream_id].uart_repeat_fifo);
-	if (len <= (UART_Repeat_Buffer_Size - used))
+	uint32_t irq_state = __get_PRIMASK();
+	__disable_irq();
+	if (len <= fifo_s_free(&uart_repeat_buffer[stream_id].uart_repeat_fifo))
 	{
-		fifo_s_puts(&uart_repeat_buffer[stream_id].uart_repeat_fifo, (char*)data, len);
+		fifo_s_puts_noprotect(&uart_repeat_buffer[stream_id].uart_repeat_fifo, (char*)data, len);
 	}
 	uart_repeat_buffer[stream_id].is_used_for_continued_stream = 1;
+	__set_PRIMASK(irq_state);
 }
 
 uint16_t Uart_ext_get_Tx_fifo_free_size(uint8_t stream_id)

@@ -126,6 +126,18 @@ void Vofa_Send_Data2_U3(float data1, float data2)
 }
 void Vofa_Send_Data_s(float*data, uint8_t ch_num)
 {
-	Uart_ext_data_sent((uint8_t*)data, ch_num * sizeof(float), Uart_repeatTool_stream_ID);
-	Uart_ext_data_sent(Vofa_data_2.tail, sizeof(Vofa_data_2.tail), Uart_repeatTool_stream_ID);
+	if (data == NULL || ch_num == 0)
+	{
+		return;
+	}
+	uint16_t data_size = ch_num * sizeof(float);
+	uint32_t irq_state = __get_PRIMASK();
+	__disable_irq();
+	/* Queue the complete frame, or drop it without leaving a partial frame. */
+	if (Uart_ext_get_Tx_fifo_free_size(Uart_repeatTool_stream_ID) >= data_size + sizeof(Vofa_data_2.tail))
+	{
+		Uart_ext_data_sent((uint8_t*)data, data_size, Uart_repeatTool_stream_ID);
+		Uart_ext_data_sent(Vofa_data_2.tail, sizeof(Vofa_data_2.tail), Uart_repeatTool_stream_ID);
+	}
+	__set_PRIMASK(irq_state);
 }

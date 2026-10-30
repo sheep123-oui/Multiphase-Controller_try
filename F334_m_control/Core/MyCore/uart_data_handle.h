@@ -88,6 +88,7 @@ typedef struct
 	fifo_s_t uart_repeat_fifo;
 	RAM_Align_32Byte uint8_t uart_repeat_area[UART_Repeat_Buffer_Size];//FIFO
 	RAM_Align_32Byte uint8_t repeat_tx_DMA_buffer[UART_Repeat_Buffer_Size];
+	uint16_t tx_pending_size; // Retained until DMA accepts the buffered data.
 	uint8_t is_used_for_continued_stream;
 }Uart_Repeat_Buffer_t;//串口转发器输出通道结构体
 #endif
@@ -103,6 +104,9 @@ void Uart_cmd_unregister(UART_HandleTypeDef* huart);
 uint8_t Uart_Repeat_Get_stream_ID(UART_HandleTypeDef* huart);
 
 void Uart_CMD_Init(void);
+
+void Uart_Tx_Init(void);
+void Uart_Tx_task(void);
 
 void uart_New_baudrate(UART_HandleTypeDef* huart, uint32_t baudrate);
 
