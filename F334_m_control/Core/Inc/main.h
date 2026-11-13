@@ -67,6 +67,8 @@ void Error_Handler(void);
 #define DAC_H_GPIO_Port GPIOA
 #define DAC_L_Pin GPIO_PIN_6
 #define DAC_L_GPIO_Port GPIOA
+#define ADC2_4_I_CAP_B_Pin GPIO_PIN_7
+#define ADC2_4_I_CAP_B_GPIO_Port GPIOA
 #define ADC1_11_Vcap_Pin GPIO_PIN_0
 #define ADC1_11_Vcap_GPIO_Port GPIOB
 #define ADC1_12_V24_Pin GPIO_PIN_1
@@ -75,8 +77,8 @@ void Error_Handler(void);
 #define ADC2_12_I_chas_GPIO_Port GPIOB
 #define ADC1_13_I_BAT_Pin GPIO_PIN_13
 #define ADC1_13_I_BAT_GPIO_Port GPIOB
-#define ADC2_14_I_CAP_Pin GPIO_PIN_14
-#define ADC2_14_I_CAP_GPIO_Port GPIOB
+#define ADC2_14_I_CAP_A_Pin GPIO_PIN_14
+#define ADC2_14_I_CAP_A_GPIO_Port GPIOB
 #define EN_MOS_Pin GPIO_PIN_15
 #define EN_MOS_GPIO_Port GPIOB
 #define Cap_En_Pin GPIO_PIN_12

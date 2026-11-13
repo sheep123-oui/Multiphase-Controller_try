@@ -50,15 +50,31 @@ void sys_data_sent(void)
 {
 	/* TIM15 updates these values; copy one consistent sample before sending. */
 	User_ADC_out_data_t sample;
+	Power_monitor_data_t monitor;
+	float cap_current_target;
 	uint32_t irq_state = __get_PRIMASK();
 	__disable_irq();
 	sample = User_ADC_out_data;
+	monitor = Power_monitor_data;
+	cap_current_target = Cap_current_set;
 	__set_PRIMASK(irq_state);
 
+	/* Preserve the original nine channels; append phase currents and window means. */
 	float data[] = {
-		sample.V_BAT, sample.V_CAP,
-		sample.Current_BAT, sample.Current_CAP, sample.Current_Chassis,
-		sample.Cap_power, sample.Bat_power, sample.Chassis_power
+		sample.V_BAT,
+		sample.V_CAP,
+		sample.Current_BAT,
+		sample.Current_CAP,
+		sample.Current_Chassis,
+		sample.Cap_power,
+		sample.Bat_power,
+		sample.Chassis_power,
+		cap_current_target,
+		sample.Current_CAP_A,
+		sample.Current_CAP_B,
+		monitor.Current_CAP_mean,
+		monitor.Cap_power_mean,
+		monitor.Bat_power_mean,
 	};
 	Vofa_Send_Data_s(data, sizeof(data) / sizeof(data[0]));
 }
@@ -73,10 +89,11 @@ scheduler_task_t scheduler_task[] =
 {
 	//@毫秒
 	{led_flash, 10, 0},
-	/* 36 bytes/frame at 100 Hz uses 31.25% of the 115200-baud 8N1 link. */
+	/* 14 float32 values + JustFloat tail = 60 bytes at 100 Hz. */
 	{sys_data_sent,10,0},
 	{Uart_Tx_task,1,0},
 	{PowerlimitUpdata,1,0},
+	{power_loop_task,10,0},
 	{Start_task, 1, 0},
 #if Debug_State == 0
 	{wdg_flash, 100, 0}

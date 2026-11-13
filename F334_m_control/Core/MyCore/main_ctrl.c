@@ -8,17 +8,28 @@
 #include "My_Math.h"
 #include "Vofa_send.h"
 #include "status_led_langue.h"
+#include "current_calibration.h"
+#include <math.h>
 
+/* The comparator receives (I_A + I_B) / 2; software power uses total current. */
+#define CAP_TOTAL_TO_AVERAGE_CURRENT 0.5f
+#define CAP_MIN_CONTROL_VOLTAGE 1.0f
+/* Assumes positive current charges the capacitor. Calibrate for the hardware. */
+#define CAP_VOLTAGE_COMPENSATION_RESISTANCE 0.115f
+#define POWER_MONITOR_SAMPLE_COUNT 1000U
+#define BAT_POWER_CORRECTION_LIMIT 10.0f
 
-float hysteresis_width = 0.2f;
+float hysteresis_width = 0.2f; // Half-width in average-current amperes.
 float current_save = 0;
 
 uint8_t ctrl_enable_flag = 0;
 uint8_t Cap_enable_flag = 0;
 
 float Bat_power_set = 40;
-float Cap_current_set = 0;
-
+float Cap_current_set = 0; // Total capacitor-current target, A + B.
+Power_monitor_data_t Power_monitor_data = { 0 };
+static volatile uint32_t power_monitor_sequence = 0;
+static volatile float battery_power_correction = 0.0f; // W; main task to TIM15.
 
 
 Pid_t Bat_power_loop = { 0 };
@@ -130,13 +141,17 @@ void ctrl_check(void)
 
 void main_ctrl_Init(void)
 {
-	DAC_start();
-	HRtim_start();
-	// DAC_set_value(1, -1);
-	Ctrl_Set_hysteresis_width(0.1f);
+	/* Initialize all control state before enabling the 100 kHz interrupt. */
+	PID_struct_init(&Bat_power_loop, PID_DELTA,
+		BAT_POWER_CORRECTION_LIMIT, -BAT_POWER_CORRECTION_LIMIT,
+		BAT_POWER_CORRECTION_LIMIT, -BAT_POWER_CORRECTION_LIMIT,
+		0.05f, 0.001f, 0.0f);
+	Pid_clear_i(&Bat_power_loop);
+	battery_power_correction = 0.0f;
+	Ctrl_Set_hysteresis_width(0.3f);
 	Ctrl_hysteresis(0.3f);
-	//! 电池功率环路PID还没细调
-	PID_struct_init(&Bat_power_loop, PID_DELTA, 10, -10, 10, -10, 0.05f, 0.001f, 0.0f);
+	HRtim_start();
+	DAC_start();
 }
 void ctrl_Updata_pid(float p, float i, float d)
 {
@@ -149,18 +164,56 @@ void TIM1_BRK_TIM15_IRQHandler(void)
 	__HAL_TIM_CLEAR_FLAG(&htim15, TIM_FLAG_UPDATE);
 	main_ctrl_task();
 }
+
+static void power_monitor_update(void)
+{
+	static float current_sum = 0.0f;
+	static float cap_power_sum = 0.0f;
+	static float bat_power_sum = 0.0f;
+	static uint16_t sample_count = 0;
+
+	/* Diagnostic statistics only: never feed these averages back to the DAC. */
+	current_sum += User_ADC_out_data.Current_CAP;
+	cap_power_sum += User_ADC_out_data.Cap_power;
+	bat_power_sum += User_ADC_out_data.Bat_power;
+	if (++sample_count >= POWER_MONITOR_SAMPLE_COUNT)
+	{
+		const float inverse_count = 1.0f / POWER_MONITOR_SAMPLE_COUNT;
+		Power_monitor_data.Current_CAP_mean = current_sum * inverse_count;
+		Power_monitor_data.Cap_power_mean = cap_power_sum * inverse_count;
+		Power_monitor_data.Bat_power_mean = bat_power_sum * inverse_count;
+		++power_monitor_sequence;
+		current_sum = 0.0f;
+		cap_power_sum = 0.0f;
+		bat_power_sum = 0.0f;
+		sample_count = 0;
+	}
+}
+
 void main_ctrl_task(void)
 {
 	ADC_handle_task(&User_ADC_out_data);
 	User_ADC_out_data.Cap_power = User_ADC_out_data.Current_CAP * User_ADC_out_data.V_CAP;
 	User_ADC_out_data.Bat_power = User_ADC_out_data.Current_BAT * User_ADC_out_data.V_BAT;
 	User_ADC_out_data.Chassis_power = User_ADC_out_data.Current_Chassis * User_ADC_out_data.V_BAT;
+	power_monitor_update();
 
 	float power_delta = Bat_power_set - User_ADC_out_data.Chassis_power;
-	// pid_calc(&Bat_power_loop, User_ADC_out_data.Bat_power, Bat_power_set);
-	Cap_current_set = (power_delta ) / User_ADC_out_data.V_CAP;
-	Clamp_de_(-36.0f, 32.0f, Cap_current_set);
-	Ctrl_hysteresis(Cap_current_set);
+	/* Keep the empty-load isolation test; apply the slow loop's correction in W. */
+	// float power_delta = Bat_power_set + battery_power_correction;
+	if (isfinite(power_delta) && isfinite(User_ADC_out_data.V_CAP) &&
+		User_ADC_out_data.V_CAP >= CAP_MIN_CONTROL_VOLTAGE)
+	{
+		Cap_current_set = power_delta / User_ADC_out_data.V_CAP;
+		Clamp_de_(-36.0f, 32.0f, Cap_current_set);
+	}
+	else
+	{
+		/* Do not turn an invalid/near-zero voltage into a full-current request. */
+		Cap_current_set = 0.0f;
+	}
+	Ctrl_hysteresis(Cap_current_set * CAP_TOTAL_TO_AVERAGE_CURRENT);
+	// Ctrl_hysteresis(5.0f);
 
 	// ctrl_check();
 
@@ -173,6 +226,42 @@ void main_ctrl_task(void)
 	// }
 }
 
+void power_loop_task(void)
+{
+	static uint32_t last_sequence = 0;
+	uint32_t irq_state = __get_PRIMASK();
+	__disable_irq();
+	uint32_t sequence = power_monitor_sequence;
+	float measured_power = Power_monitor_data.Bat_power_mean;
+	float cap_voltage = User_ADC_out_data.V_CAP;
+	float target_power = Bat_power_set;
+	uint8_t enabled = ctrl_enable_flag;
+	__set_PRIMASK(irq_state);
+
+	if (!enabled || !isfinite(measured_power) || !isfinite(target_power) ||
+		!isfinite(cap_voltage) || cap_voltage < CAP_MIN_CONTROL_VOLTAGE)
+	{
+		Pid_clear_i(&Bat_power_loop);
+		battery_power_correction = 0.0f;
+		last_sequence = sequence;
+		return;
+	}
+	/* Never integrate the same 10 ms measurement window twice. */
+	if (sequence == last_sequence)
+	{
+		return;
+	}
+	last_sequence = sequence;
+	float correction = pid_calc(&Bat_power_loop, measured_power, target_power);
+	if (!isfinite(correction))
+	{
+		Pid_clear_i(&Bat_power_loop);
+		correction = 0.0f;
+	}
+	Clamp_de_(-BAT_POWER_CORRECTION_LIMIT, BAT_POWER_CORRECTION_LIMIT, correction);
+	battery_power_correction = correction;
+}
+
 void HRtim_start(void)
 {
 	HAL_HRTIM_WaveformCountStart(&hhrtim1, HRTIM_TIMERID_TIMER_A);
@@ -180,16 +269,16 @@ void HRtim_start(void)
 }
 void DAC_start(void)
 {
-	HAL_TIM_Base_Start_IT(&htim15);
 	HAL_DAC_Start(&hdac1, DAC_CHANNEL_1);
 	HAL_DAC_Start(&hdac2, DAC_CHANNEL_1);
+	HAL_TIM_Base_Start_IT(&htim15);
 }
 void DAC_set_value(float current_H, float current_L)
 {
-	//Current_CAP = (adc2_value[0] * 3.3f / 4095 - 1.65f) / 20 / 0.002f;
 	uint16_t value1, value2;
-	value1 = (current_H * 0.002f * 20 + 1.65f) / 3.3f * 4095;
-	value2 = (current_L * 0.002f * 20 + 1.65f) / 3.3f * 4095;
+	/* Thresholds use the measured average-output zero and actual DAC reference. */
+	value1 = (current_H * CAP_CURRENT_VOLTS_PER_AMP + CAP_AVG_FEEDBACK_ZERO_VOLTAGE) * CAP_DAC_CODES_PER_VOLT;
+	value2 = (current_L * CAP_CURRENT_VOLTS_PER_AMP + CAP_AVG_FEEDBACK_ZERO_VOLTAGE) * CAP_DAC_CODES_PER_VOLT;
 	HAL_DAC_SetValue(&hdac1, DAC_CHANNEL_1, DAC_ALIGN_12B_R, value1);
 	HAL_DAC_SetValue(&hdac2, DAC_CHANNEL_1, DAC_ALIGN_12B_R, value2);
 }
@@ -200,36 +289,43 @@ void Ctrl_Set_hysteresis_width(float width)
 	Ctrl_hysteresis(current_save);
 }
 
-void Ctrl_hysteresis(float current)
+void Ctrl_hysteresis(float average_current)
 {
 	float current_H, current_L;
-	current_save = current;
-	current_H = current + hysteresis_width;
-	current_L = current - hysteresis_width;
+	current_save = average_current;
+	current_H = average_current + hysteresis_width;
+	current_L = average_current - hysteresis_width;
 	DAC_set_value(current_H, current_L);
 }
 
-/* Power step arrays (voltage breakpoints and target power values).
-   Edit these arrays to change the multi-stage power curve.
-   The length must match POWER_STEP_COUNT (default 5).
-   Example default points replicate prior behavior roughly.
-*/
+/* Keep 30 W below 23.8 V, then taper to 2 W at 24.3 V.
+ * Reaching the last voltage point must not introduce a power discontinuity. */
 #ifndef POWER_STEP_COUNT
-#define POWER_STEP_COUNT 5
+#define POWER_STEP_COUNT 6
 #endif
 
-const float POWER_VOLTAGE_POINTS[POWER_STEP_COUNT] = { 0.0f, 12.0f, 17.0f, 20.8f, 24.3f };
-const float POWER_VALUES[POWER_STEP_COUNT] = { 45.0f, 200.0f, 150.0f, 60.0f, 30.0f };
-
-/* final minimum power when approaching Cap_full_voltage_value (can be changed) */
 #ifndef POWER_END_POWER
 #define POWER_END_POWER 2.0f
 #endif
 
+const float POWER_VOLTAGE_POINTS[POWER_STEP_COUNT] = { 0.0f, 12.0f, 17.0f, 20.8f, 23.8f, 24.3f };
+// const float POWER_VALUES[POWER_STEP_COUNT] = { 30.0f, 30.0f, 30.0f, 30.0f, 30.0f, POWER_END_POWER };
+const float POWER_VALUES[POWER_STEP_COUNT] = { 45.0f, 200.0f, 150.0f, 60.0f, 30.0f, POWER_END_POWER };
+
 void PowerlimitUpdata(void)
 {
-
-	float V_real_measure = User_ADC_out_data.V_CAP - User_ADC_out_data.Current_CAP * 0.115f;
+	/* Read voltage and total current from the same control-interrupt update. */
+	uint32_t irq_state = __get_PRIMASK();
+	__disable_irq();
+	float cap_voltage = User_ADC_out_data.V_CAP;
+	float cap_current = User_ADC_out_data.Current_CAP;
+	__set_PRIMASK(irq_state);
+	float V_real_measure = cap_voltage - cap_current * CAP_VOLTAGE_COMPENSATION_RESISTANCE;
+	if (!isfinite(V_real_measure))
+	{
+		Bat_power_set = POWER_END_POWER;
+		return;
+	}
 	Clamp_de_(0.01f, 30.0f, V_real_measure);
 
 	float battery_power_limit_temp = POWER_VALUES[0];
@@ -255,8 +351,7 @@ void PowerlimitUpdata(void)
 				break;
 			}
 		}
-		/*如果高于最后一个配置点，则夹紧到最后一个值；如果Cap_full_voltage_value更高，
-		可选地插值到Cap_full_voltage_value附近的最小值*/
+		/* Match the last point's power continuously above the full-voltage limit. */
 		if (V_real_measure > POWER_VOLTAGE_POINTS[POWER_STEP_COUNT - 1])
 		{
 			battery_power_limit_temp = POWER_END_POWER;

@@ -1,6 +1,14 @@
 #include "adc_handle.h"
 #include "math.h"
 #include "Ramp.h"
+#include "current_calibration.h"
+
+/* TIM15 runs at 100 kHz. Fold fixed conversion ratios at compile time so
+ * sampling does not spend the interrupt budget on repeated FP divisions. */
+#define ADC_PIN_VOLTAGE_SCALE (3.3f / 4095.0f)
+#define ADC_CURRENT_2MOHM_GAIN (1.0f / (20.0f * 0.002f))
+#define ADC_CURRENT_1MOHM_GAIN (1.0f / (20.0f * 0.001f))
+
 uint16_t adc1_value[ADC1_VALUE_SIZE];
 uint16_t adc2_value[ADC2_VALUE_SIZE];
 
@@ -62,14 +70,21 @@ void ADC_To_Current(float* current_out, uint16_t adc_value, uint8_t gain, float 
 	}
 }
 
+static void ADC_handle_cap_current_task(User_ADC_out_data_t* adc_out_data)
+{
+	adc_out_data->Current_CAP_A = (adc2_value[0] * CAP_ADC_VOLTS_PER_CODE - CAP_CURRENT_A_ZERO_VOLTAGE) * CAP_CURRENT_AMPS_PER_VOLT; // PB14 / ADC2_IN14 / Rank 1
+	adc_out_data->Current_CAP_B = (adc2_value[2] * CAP_ADC_VOLTS_PER_CODE - CAP_CURRENT_B_ZERO_VOLTAGE) * CAP_CURRENT_AMPS_PER_VOLT; // PA7 / ADC2_IN4 / Rank 3
+	adc_out_data->Current_CAP = adc_out_data->Current_CAP_A + adc_out_data->Current_CAP_B;
+}
+
 void ADC_handle_task(User_ADC_out_data_t* adc_out_data)
 {
 	/***User_Core_Begin***/
-	adc_out_data->V_BAT = (adc1_value[2] * 3.3f / 4095) * 11; // PB1 / ADC1_IN12 / V24V
-	adc_out_data->V_CAP = (adc1_value[1] * 3.3f / 4095) * 11; // PB0 / ADC1_IN11 / VCAP
-	adc_out_data->Current_BAT = (adc1_value[0] * 3.3f / 4095 - 1.65f) / 20 / 0.002f;
-	adc_out_data->Current_CAP = (adc2_value[0] * 3.3f / 4095 - 1.65f) / 20 / 0.002f;
-	adc_out_data->Current_Chassis = (adc2_value[1] * 3.3f / 4095 - 1.65f) / 20 / 0.001f;
+	adc_out_data->V_BAT = adc1_value[2] * (ADC_PIN_VOLTAGE_SCALE * 11.0f); // PB1 / ADC1_IN12 / V24V
+	adc_out_data->V_CAP = adc1_value[1] * (ADC_PIN_VOLTAGE_SCALE * 11.0f); // PB0 / ADC1_IN11 / Rank 2 / VCAP
+	adc_out_data->Current_BAT = (adc1_value[0] * ADC_PIN_VOLTAGE_SCALE - 1.65f) * ADC_CURRENT_2MOHM_GAIN;
+	ADC_handle_cap_current_task(adc_out_data);
+	adc_out_data->Current_Chassis = (adc2_value[1] * ADC_PIN_VOLTAGE_SCALE - 1.65f) * ADC_CURRENT_1MOHM_GAIN;
 
 	adc_out_data->V_BAT = RC_filter(Last_V_BAT, adc_out_data->V_BAT, 0.1f);
 	Last_V_BAT = adc_out_data->V_BAT;
@@ -79,14 +94,14 @@ void ADC_handle_task(User_ADC_out_data_t* adc_out_data)
 void ADC_handle_chassis_current_task(User_ADC_out_data_t* adc_out_data)
 {
 	/***User_Core_Begin***/
-	adc_out_data->Current_Chassis = (adc2_value[1] * 3.3f / 4095 - 1.65f) / 20 / 0.001f;
+	adc_out_data->Current_Chassis = (adc2_value[1] * ADC_PIN_VOLTAGE_SCALE - 1.65f) * ADC_CURRENT_1MOHM_GAIN;
 	/***User_Core_End***/
 }
 
 void ADC_handle_curernt_task(User_ADC_out_data_t* adc_out_data)
 {
 	/***User_Core_Begin***/
-	adc_out_data->Current_BAT = (adc1_value[0] * 3.3f / 4095 - 1.65f) / 20 / 0.002f;
-	adc_out_data->Current_CAP = (adc2_value[0] * 3.3f / 4095 - 1.65f) / 20 / 0.002f;
+	adc_out_data->Current_BAT = (adc1_value[0] * ADC_PIN_VOLTAGE_SCALE - 1.65f) * ADC_CURRENT_2MOHM_GAIN;
+	ADC_handle_cap_current_task(adc_out_data);
 	/***User_Core_End***/
 }

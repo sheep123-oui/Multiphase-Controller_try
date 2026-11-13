@@ -32,6 +32,31 @@
     "git.openRepositoryInParentFolders": "always",
     "git.autoRepositoryDetection": true
   },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Build firmware (GCC)",
+        "type": "process",
+        "command": "powershell.exe",
+        "args": [
+          "-NoProfile",
+          "-ExecutionPolicy",
+          "Bypass",
+          "-File",
+          "${workspaceFolder}/tools/build.ps1"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder}"
+        },
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        },
+        "problemMatcher": "$gcc"
+      }
+    ]
+  },
   "extensions": {
     "recommendations": [
       "cl.eide",
