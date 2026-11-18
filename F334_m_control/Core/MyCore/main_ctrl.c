@@ -205,7 +205,7 @@ void main_ctrl_task(void)
 		User_ADC_out_data.V_CAP >= CAP_MIN_CONTROL_VOLTAGE)
 	{
 		Cap_current_set = power_delta / User_ADC_out_data.V_CAP;
-		Clamp_de_(-36.0f, 32.0f, Cap_current_set);
+		Clamp_de_(-60.0f, 32.0f, Cap_current_set);
 	}
 	else
 	{

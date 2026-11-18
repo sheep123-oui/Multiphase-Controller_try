@@ -8,6 +8,7 @@
 #define ADC_PIN_VOLTAGE_SCALE (3.3f / 4095.0f)
 #define ADC_CURRENT_2MOHM_GAIN (1.0f / (20.0f * 0.002f))
 #define ADC_CURRENT_1MOHM_GAIN (1.0f / (20.0f * 0.001f))
+#define ADC_CURRENT_0_75MOHM_GAIN (1.0f / (20.0f * 0.00075f))
 
 uint16_t adc1_value[ADC1_VALUE_SIZE];
 uint16_t adc2_value[ADC2_VALUE_SIZE];
@@ -84,7 +85,7 @@ void ADC_handle_task(User_ADC_out_data_t* adc_out_data)
 	adc_out_data->V_CAP = adc1_value[1] * (ADC_PIN_VOLTAGE_SCALE * 11.0f); // PB0 / ADC1_IN11 / Rank 2 / VCAP
 	adc_out_data->Current_BAT = (adc1_value[0] * ADC_PIN_VOLTAGE_SCALE - 1.65f) * ADC_CURRENT_2MOHM_GAIN;
 	ADC_handle_cap_current_task(adc_out_data);
-	adc_out_data->Current_Chassis = (adc2_value[1] * ADC_PIN_VOLTAGE_SCALE - 1.65f) * ADC_CURRENT_1MOHM_GAIN;
+	adc_out_data->Current_Chassis = (adc2_value[1] * ADC_PIN_VOLTAGE_SCALE - 1.65f) * ADC_CURRENT_0_75MOHM_GAIN;
 
 	adc_out_data->V_BAT = RC_filter(Last_V_BAT, adc_out_data->V_BAT, 0.1f);
 	Last_V_BAT = adc_out_data->V_BAT;
@@ -94,7 +95,7 @@ void ADC_handle_task(User_ADC_out_data_t* adc_out_data)
 void ADC_handle_chassis_current_task(User_ADC_out_data_t* adc_out_data)
 {
 	/***User_Core_Begin***/
-	adc_out_data->Current_Chassis = (adc2_value[1] * ADC_PIN_VOLTAGE_SCALE - 1.65f) * ADC_CURRENT_1MOHM_GAIN;
+	adc_out_data->Current_Chassis = (adc2_value[1] * ADC_PIN_VOLTAGE_SCALE - 1.65f) * ADC_CURRENT_0_75MOHM_GAIN;
 	/***User_Core_End***/
 }
 
